@@ -1,12 +1,16 @@
 from http.server import BaseHTTPRequestHandler
+import json
+from game import board
 
-
+chess_board = board()
+last_move_check = None
 class MyHTTPRequeestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         print('GET')
         handle_get_request(self)
     def do_POST(self):
         print('POST')
+        handle_post_request(self)
         
 def handle_get_request(request:MyHTTPRequeestHandler):
     if (request.path == '/'):
@@ -33,6 +37,64 @@ def handle_read_file(request:MyHTTPRequeestHandler,path : str):
         request.send_header('Content-type',content_type)
         request.end_headers()
         request.wfile.write(file.read())
-    
 def handle_post_request(request:MyHTTPRequeestHandler):
-    pass
+    request_type = request.headers['Request-type']
+    content_length = int(request.headers['Content-Length'])
+    post_data = request.rfile.read(content_length).decode('utf-8')
+    data = json.loads(post_data)
+    global chess_board,last_move_check
+    if (request_type=='fetch_board'):
+        request.send_response(200)
+        request.send_header('Content-type','text/json')
+        request.end_headers()
+        request.wfile.write(str(chess_board.out_server()).replace("'",'"').encode('utf-8'))
+    elif (request_type=='fetch_moveable'):
+        side = data['Side']
+        pos_num = int(data['Position'])
+        pos = [pos_num//10,pos_num%10]
+        if (chess_board.get_side(pos) == side):
+            last_move_check = pos
+            request.send_response(200)
+            request.send_header('Content-type','text/json')
+            request.end_headers()
+            request.wfile.write(str(chess_board.out_server_moveable(pos,side)).replace("'",'"').encode('utf-8'))
+        else:
+            request.send_response_only(200)
+            request.send_header('Content-type','text/json')
+            request.end_headers()
+    elif (request_type=='move_piece'):
+        side = data['Side']
+        other_side = data['Other-side']
+        pos_num = int(data['To'])
+        pos = [pos_num//10,pos_num%10]
+        if (chess_board.get_side(pos) == None or chess_board.get_side(pos) != side):
+            request.send_response(200)
+            request.send_header('Content-type','text/json')
+            chess_board.move(last_move_check[0],last_move_check[1],pos[0],pos[1],side)
+            winner = chess_board.check_win()
+            if (winner == None):
+                chess_board.auto_play(other_side)
+                winner = chess_board.check_win()
+                if (winner == None):
+                    request.send_header('Game-state','continue')
+                    request.end_headers()
+                    request.wfile.write(str(chess_board.out_server()).replace("'",'"').encode('utf-8'))
+                else:
+                    request.send_header('Game-state','lose')
+                    request.end_headers()
+            else:
+                request.send_header('Game-state','win')
+                request.end_headers()
+        else:
+            request.send_response_only(200)
+            request.send_header('Content-type','text/json')
+            request.end_headers()
+    elif (request_type=='reset'):
+        chess_board = board()
+        chess_board.start()
+        request.send_response(200)
+        request.send_header('Content-type','text/json')
+        request.end_headers()
+        request.wfile.write(str(chess_board.out_server()).replace("'",'"').encode('utf-8'))
+        
+    
