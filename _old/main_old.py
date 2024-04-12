@@ -1,11 +1,11 @@
 from http.server import HTTPServer
-from game import board
-from server import MyHTTPRequeestHandler
-import server as server
+from game_old import board
+from server_old import MyHTTPRequeestHandler
+import server_old as server_old
 
 test_board = board()
 test_board.start()
-server.chess_board = test_board
+server_old.chess_board = test_board
 
 local_add = '127.0.0.1'
 port = 6969
