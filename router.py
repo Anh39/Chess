@@ -6,7 +6,7 @@ from enum import Enum
 import time
 from game import Game
 from board import Board
-from ai_engine import RandomEngine,MinimaxEngine
+from ai_engine import MinimaxEngine
 
 routes = web.RouteTableDef()
 no_cache = {'Cache-Control':'no-cache'}

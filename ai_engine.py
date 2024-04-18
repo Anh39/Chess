@@ -136,6 +136,8 @@ class MinimaxEngine(Engine):
         }
         ally_point = 0
         enemy_point = 0
+        ally_capture_point = 0
+        enemy_capture_point = 0
         for i in range(8):
             for j in range(8):
                 local_point = 0
@@ -146,17 +148,21 @@ class MinimaxEngine(Engine):
                 #     local_point += mapping[p_type]*move_multi[p_type]*len(p_moves[i][j])
                 # else:
                 local_point += mapping[p_type]
-                for pos in p_defs[i][j]:
-                    target_type = p_types[pos[0]][pos[1]]
-                    local_point += mapping[p_type]*defense_multi[target_type]
-                # for pos in p_caps[i][j]:
+                # for pos in p_defs[i][j]:
                 #     target_type = p_types[pos[0]][pos[1]]
-                #     local_point += mapping[p_type]*capture_multi[target_type]
+                #     local_point += mapping[p_type]*defense_multi[target_type]
+                local_capture_point = 0
+                for pos in p_caps[i][j]:
+                    target_type = p_types[pos[0]][pos[1]]
+                    local_point += mapping[target_type]/4
+                    local_capture_point += mapping[target_type]/2
                 if (p_sides[i][j] == side):
                     ally_point += local_point
+                    ally_capture_point += local_capture_point
                 else:
                     enemy_point += local_point
-        return (ally_point-enemy_point/10,enemy_point)
+                    enemy_capture_point += local_capture_point
+        return (ally_capture_point-enemy_capture_point/2,enemy_point)
                 
                 
         
