@@ -4,14 +4,14 @@ import asyncio
 import json
 from enum import Enum
 import time
-from game import Board
-from ai_engine import RandomEngine
+from game import Game
+from board import Board
+from ai_engine import RandomEngine,MinimaxEngine
 
 routes = web.RouteTableDef()
 no_cache = {'Cache-Control':'no-cache'}
-board = Board()
-board.new_board()
-board.engine = RandomEngine()
+game = Game(Board(),MinimaxEngine())
+game.board.new_game()
 
 @routes.get('/')
 async def entry(request : web.Request):
@@ -26,13 +26,13 @@ async def board_request(request : web.Request):
     try:
         command = request.match_info['command']
         if (command == 'render'):
-            result = board.i_get_display()
+            result = game.i_display()
             return web.Response(text=json.dumps(result),content_type='text/json',status=200,headers=no_cache)
         elif (command == 'get_move'):
             data = await request.json()
             side = data['Side']
             pos = (data['Position']['x'],data['Position']['y'])
-            result = board.i_get_moveable(pos,side)
+            result = game.i_display_move(pos,side[:1])
             if (result is not None):
                 return web.Response(text=json.dumps(result),content_type='text/json',status=200,headers=no_cache)
             else:
@@ -41,19 +41,19 @@ async def board_request(request : web.Request):
             data = await request.json()
             from_pos = (data['From']['x'],data['From']['y'])
             to_pos = (data['To']['x'],data['To']['y'])
-            board.player_move(from_pos,to_pos)
-            result = board.i_get_display()
+            game.i_player_move(from_pos,to_pos)
+            result = game.i_display()
             return web.Response(text=json.dumps(result),content_type='text/json',status=200,headers=no_cache)
         elif (command == 'bot_move'):
-            board.i_bot_move()
-            result = board.i_get_display()
+            game.i_bot_move()
+            result = game.i_display()
             return web.Response(text=json.dumps(result),content_type='text/json',status=200,headers=no_cache)
         elif (command == 'check_win'):
-            result = board.i_check_win()
+            result = game.i_check_win()
             return web.Response(text=result,content_type='text/plain',status=200,headers=no_cache)
         elif (command == 'new'):
-            board.new_board()
-            result = board.i_get_display()
+            game.i_new_game()
+            result = game.i_display()
             return web.Response(text=json.dumps(result),content_type='text/json',status=200,headers=no_cache)
     except Exception as e:
         print(e)

@@ -6,12 +6,12 @@ export function move_piece(from_pos,to_pos) {
         body: JSON.stringify({
             'Side':side,
             'From' : {
-                'x' : Math.floor(from_pos/10),
-                'y' : from_pos%10
+                'x' : from_pos%10,
+                'y' : Math.floor(from_pos/10)
             },
             'To': {
-                'x' : Math.floor(to_pos/10),
-                'y' : to_pos%10
+                'x' : to_pos%10,
+                'y' : Math.floor(to_pos/10)
             }
         })
     })
@@ -114,8 +114,8 @@ export function fetch_moveable(pos) {
         body: JSON.stringify({
             'Side':side,
             'Position':{
-                'x' : Math.floor(pos/10),
-                'y' : pos%10
+                'x' : pos%10,
+                'y' : Math.floor(pos/10)
             }
         })
     })
