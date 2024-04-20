@@ -55,7 +55,8 @@ class Game:
                     elif (local_piece is None):
                         inner_result.append('-')
                     else:
-                        inner_result.append(local_piece[0]+local_piece[1])
+                        inner_result.append('-')
+                        # inner_result.append(local_piece[0]+local_piece[1])
                 result.append(inner_result)
         return result
     def i_player_move(self,from_pos,to_pos):

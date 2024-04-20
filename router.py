@@ -63,7 +63,10 @@ async def board_request(request : web.Request):
 async def get_asset(request : web.Request):
     try:
         file_name = request.match_info['name']
-        file_path = os.path.join('asset',file_name)
+        if (file_name.endswith('.png')):
+            file_path = os.path.join('asset','img',file_name)
+        else:
+            file_path = os.path.join('asset',file_name)
         response = web.FileResponse(path=file_path,status=200,headers=no_cache)
         return response
     except:

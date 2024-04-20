@@ -6,12 +6,12 @@ export function move_piece(from_pos,to_pos) {
         body: JSON.stringify({
             'Side':side,
             'From' : {
-                'y' : from_pos%10,
-                'x' : Math.floor(from_pos/10)
+                'x' : from_pos%10,
+                'y' : Math.floor(from_pos/10)
             },
             'To': {
-                'y' : to_pos%10,
-                'x' : Math.floor(to_pos/10)
+                'x' : to_pos%10,
+                'y' : Math.floor(to_pos/10)
             }
         })
     })
@@ -114,8 +114,8 @@ export function fetch_moveable(pos) {
         body: JSON.stringify({
             'Side':side,
             'Position':{
-                'y' : pos%10,
-                'x' : Math.floor(pos/10),
+                'x' : pos%10,
+                'y' : Math.floor(pos/10),
             }
         })
     })
@@ -128,11 +128,37 @@ export function fetch_moveable(pos) {
     }
     })
     .then(data => {
-        render_board(data);
+        render_move(data,pos);
     })
     .catch(error => {
         console.log('ERROR :',error);
     })
+}
+function handle_win(result) {
+    if (result == 'not_end'){
+        console.log('Continue');
+        return false;
+    } else {
+        let end_game_label = document.getElementById('end_game_label');
+        let piece_container = document.getElementById('piece_container');
+        piece_container.style.display = 'none';
+        let end_game_container = document.getElementById('end_game_container');
+        end_game_container.style.display = 'flex';
+
+        if (result == 'up') {
+            end_game_label.textContent = 'You LOSE';
+            console.log('Up win');
+        }
+        else if (result == 'down') {
+            end_game_label.textContent = 'You WIN';
+            console.log('Down win');
+        }
+        else if (result == 'tie') {
+            end_game_label.textContent = 'Tie';
+            console.log('Tie');
+        }
+        return true;
+    }
 }
 function render_board(data) {
     let mapping = {
@@ -142,7 +168,44 @@ function render_board(data) {
     }
     for (let x_it=0;x_it<8;x_it++) {
         for (let y_it = 0;y_it<8;y_it++) {
-            pieces[x_it][y_it].src = mapping[data[y_it][x_it]];
+            let source = mapping[data[y_it][x_it]];
+            let element = pieces[x_it][y_it]
+            while (element.children.length > 1) {
+                element.removeChild(element.children[element.children.length-1])
+            }
+            element.children[0].src = source;
+        }
+    }
+}
+function render_move(data,from_pos) {
+    let mapping = {
+        'ru' : 'black_rook.png','ku' : 'black_knight.png','bu':'black_bishop.png','qu':'black_queen.png','Ku':'black_king.png','pu':'black_pawn.png',
+        'rd' : 'white_rook.png','kd' : 'white_knight.png','bd':'white_bishop.png','qd':'white_queen.png','Kd':'white_king.png','pd':'white_pawn.png',
+        '-' : 'empty.png','m':'green.png','c':'red.png'
+    }
+    for (let x_it=0;x_it<8;x_it++) {
+        for (let y_it = 0;y_it<8;y_it++) {
+            let source = mapping[data[y_it][x_it]];
+            let element = pieces[x_it][y_it]
+            while (element.children.length > 1) {
+                element.removeChild(element.children[element.children.length-1])
+            }
+            if (source == 'green.png' || source == 'red.png') {
+                let new_img_element = document.createElement('img');
+                new_img_element.src = source;   
+                new_img_element.classList.add('overlay');
+                new_img_element.addEventListener('click', async () => {
+                    move_piece(from_pos,element.id);
+                    let result = await check_win();
+                    let status = handle_win(result);
+                    if (status == false) {
+                        bot_move();
+                    }
+                    result = await check_win();
+                    status = handle_win(result);
+                })
+                element.appendChild(new_img_element);
+            }
         }
     }
 }

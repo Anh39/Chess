@@ -1,50 +1,44 @@
-import { fetch_board,new_board,move_piece,fetch_moveable,check_win,bot_move } from "./fetch_api.js";
-import { last_selected_pos,setPieces,seteLastSelectedPos } from "./info.js";
+import { new_board,fetch_moveable} from "./fetch_api.js";
+import { setPieces} from "./info.js";
 
 function init_button_group() {
-    document.getElementById('fetch_render').addEventListener('click',fetch_board);
-    document.getElementById('new_game').addEventListener('click',new_board);
+    document.getElementById('new_game').addEventListener('click',() => {
+        new_board();
+        let end_game_label = document.getElementById('end_game_label');
+        let piece_container = document.getElementById('piece_container');
+        piece_container.style.display = 'grid';
+        let end_game_container = document.getElementById('end_game_container');
+        end_game_container.style.display = 'none';
+    })
 }
 init_button_group();
 
-function handle_win(result) {
-    if (result == 'not_end'){
-        console.log('Continue');
-        return false;
-    }
-    else if (result == 'up') {
-        console.log('Up win');
-        return true;
-    }
-    else if (result == 'down') {
-        console.log('Down win');
-        return true;
-    }
-    else if (result == 'tie') {
-        console.log('Tie');
-        return true;
-    }
-}
-
-export function init(){
+function board_init() {
+    const piece_container = document.getElementById('piece_container');
     let result = [];
-    for (let x_it=0;x_it<8;x_it++) {
+    for (let i=0;i<8;i++) {
         let inner_arr = [];
-        for (let y_it = 0;y_it<8;y_it++) {
-            let pos = y_it.toString()+x_it.toString()
-            let img_ele = document.getElementById(pos)
-            inner_arr.push(img_ele);
-            img_ele.addEventListener('click',async function() {
-                if (this.src.endsWith('empty.png')) {
+        for (let j=0;j<8;j++) {
+            let id = i.toString() + j.toString();
+            let span_element = document.createElement('span');
+            span_element.id = id;
+            let img_element = document.createElement('img');
+            img_element.src = 'empty.png';
+            img_element.classList.add('under');
+            span_element.appendChild(img_element);
+            if ((i+j)%2==0) {
+                span_element.classList.add('black');
+            }
+            else {
+                span_element.classList.add('white');
+            }
 
-                }
-                else if (this.src.endsWith('reen.png') || this.src.endsWith('/red.png')) {
-                    move_piece(last_selected_pos,this.id);
-                    let result = await check_win();
-                    let status = handle_win(result);
-                    if (status == false) {
-                        bot_move();
-                    }
+            piece_container.appendChild(span_element);
+
+            inner_arr.push(span_element);
+            span_element.addEventListener('click',async function() {
+                if (this.children[0].src.endsWith('empty.png')) {
+
                 }
                 else {
                     fetch_moveable(this.id);
@@ -57,4 +51,5 @@ export function init(){
     }
     return result;
 }
-setPieces(init());
+
+setPieces(board_init());

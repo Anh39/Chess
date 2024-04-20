@@ -12,6 +12,6 @@ def start(port : int = 8080):
     Args:
         port (str, optional): Vị trí port, mặc định là 8080.
     """
-    web.run_app(app,host='127.0.0.1',port=port)
+    web.run_app(app,port=port)
     
 start()

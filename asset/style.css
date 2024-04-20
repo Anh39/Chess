@@ -1,11 +1,11 @@
 html {
-    border: 1px solid red;
+    border: 1px solid transparent;
     background-color: hsl(0, 0%, 15%);
 }
 #main_body {
     box-sizing: border-box;
-    width: 99vw;
-    height: 98vh;
+    width: 97vw;
+    height: 96vh;
     display: flex;
     flex-wrap: wrap;
 
@@ -13,14 +13,22 @@ html {
 #main_section {
     max-width: 100%;
     height: 100%;
-    margin: auto 20%;
+    margin: auto;
     box-sizing: border-box;
-    background-image: url('boardx.png');
-    background-position: center;
-    background-size: auto 98vh;
-    background-repeat: no-repeat;
 }
-
+#end_game_container {
+    box-sizing: border-box;
+    display: none;
+    width: 100%;
+    height: 100%;
+}
+#end_game_container span {
+    display: flex;
+    margin: auto;
+}
+#end_game_container span h1 {
+    font-size: 4em;
+}
 #piece_container {
     box-sizing: border-box;
     display: grid;
@@ -29,11 +37,32 @@ html {
     grid-template-columns: repeat(8, 12.5%);
     grid-template-rows: repeat(8,12.5%);
 }
-#piece_container img {
+#piece_container span {
+    position: relative;
     box-sizing: border-box;
     /* border: 4px solid red; */
     width: 100%;
     height: 100%;
+}
+.under {
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0%;
+}
+.overlay {
+    position:absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    top: 0;
+    left: 0;
+}
+.black {
+    background-image: url('black.png');
+}
+.white {
+    background-image: url('white.png');
 }
 #button_group {
     position: fixed;
