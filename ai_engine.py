@@ -74,10 +74,10 @@ class MinimaxEngine(Engine):
                 parent = curr_node.parent
                 if (parent != None):
                     if (side != other_side):
-                        if (parent.value <= local_point):
+                        if (parent.value < local_point):
                             return local_point
                     else:
-                        if (parent.value >= local_point):
+                        if (parent.value > local_point):
                             return local_point
                 else:
                     # print('ROOT')
