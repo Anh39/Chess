@@ -6,12 +6,12 @@ export function move_piece(from_pos,to_pos) {
         body: JSON.stringify({
             'Side':side,
             'From' : {
-                'x' : from_pos%10,
-                'y' : Math.floor(from_pos/10)
+                'y' : from_pos%10,
+                'x' : Math.floor(from_pos/10)
             },
             'To': {
-                'x' : to_pos%10,
-                'y' : Math.floor(to_pos/10)
+                'y' : to_pos%10,
+                'x' : Math.floor(to_pos/10)
             }
         })
     })
@@ -114,8 +114,8 @@ export function fetch_moveable(pos) {
         body: JSON.stringify({
             'Side':side,
             'Position':{
-                'x' : pos%10,
-                'y' : Math.floor(pos/10)
+                'y' : pos%10,
+                'x' : Math.floor(pos/10),
             }
         })
     })
@@ -142,7 +142,7 @@ function render_board(data) {
     }
     for (let x_it=0;x_it<8;x_it++) {
         for (let y_it = 0;y_it<8;y_it++) {
-            pieces[x_it][y_it].src = mapping[data[x_it][y_it]];
+            pieces[x_it][y_it].src = mapping[data[y_it][x_it]];
         }
     }
 }

@@ -1,6 +1,7 @@
 import random
 from board import Board
-
+import json
+import copy
 class Node:
     def __init__(self,board : Board,parent = None,childs : list = None) -> None:
         self.parent = parent
@@ -10,12 +11,28 @@ class Node:
 class Engine:
     def caculate(self,board : Board,input_side : str = 'u') -> Board:
         return None
-            
 class MinimaxEngine(Engine):
-    def __init__(self) -> None:
-        self.MAX_DEPTH = 4
+    @classmethod
+    def _read_map(self):
+        result = {
+            'u' : {},
+            'd' : {}
+        }
+        with open('guide_map.json','r') as file:
+            data = json.loads(file.read())
+        result['u'] = copy.deepcopy(data)
+        result['d'] = copy.deepcopy(data)
+        for piece_name in result['u']:
+            result['u'][piece_name].reverse()
+        return result
+    def __init__(self,depth : int = 4,ab_prune : bool = True,use_guide_map : bool = True) -> None:
+        self.MAX_DEPTH = depth
         self.WIN_WEIGHT = 1000000000
         self.step = 0
+        self.ab_prune = ab_prune
+        self.guide_map = None
+        if (use_guide_map == True):
+            self.guide_map = self._read_map()
     def get_moves(self,board : Board):
         moves = [[None for i in range(8)] for j in range(8)]
         captures = [[None for i in range(8)] for j in range(8)]
@@ -28,71 +45,77 @@ class MinimaxEngine(Engine):
                     moves[i][j],captures[i][j],defenses[i][j] = board.get_moves((i,j))
         return (moves,captures,defenses)
     def caculate(self,board : Board,input_side : str = 'u') -> Board:
-        def evaluate(side,curr_node : Node,depth):
-            self.step += 1
-            # print(f'Depth : {depth}')
-            depth += 1
-            local_point,moves,captures,defenses = self.get_point(curr_node.board,side)
-            # print(f'Point : {local_point}')
-            # print(curr_node.board.to_string())
-            if (depth >= self.MAX_DEPTH):
-                curr_node.value = local_point
+        other_side = 'd'
+        if (input_side == 'd'):
+            other_side = 'u'
+        def switch_side(side):
+            if (side == 'u'):
+                return 'd'
             else:
-                if (side == 'u'):
-                    next_side = 'd'
+                return 'u'
+        def minimizer(curr_node : Node,side,depth):
+            curr_node.value = -self.WIN_WEIGHT
+            for child_node in curr_node.childs:
+                curr_node.value = max(curr_node.value,evaluate(child_node,side,depth))
+            return curr_node.value
+        def maximizer(curr_node : Node,side,depth):
+            curr_node.value = self.WIN_WEIGHT
+            for child_node in curr_node.childs:
+                curr_node.value = min(curr_node.value,evaluate(child_node,side,depth))
+            return curr_node.value
+        def evaluate(curr_node : Node,side,depth):
+            self.step += 1
+            depth += 1
+            local_point,moves,captures,defenses = self.get_point(curr_node.board,input_side)
+            curr_node.value = local_point
+            if (depth >= self.MAX_DEPTH):
+                return local_point
+            if (self.ab_prune):
+                parent = curr_node.parent
+                if (parent != None):
+                    if (side != other_side):
+                        if (parent.value <= local_point):
+                            return local_point
+                    else:
+                        if (parent.value >= local_point):
+                            return local_point
                 else:
-                    next_side = 'u'
-                for i in range(8):
-                    for j in range(8):
-                        capture_moves = captures[i][j]
-                        if capture_moves != None and curr_node.board.sides[i][j] == side:
-                            for capture_move in capture_moves:
-                                new_board = curr_node.board.clone()
-                                new_node = Node(new_board,curr_node)
-                                curr_node.childs.append(new_node)
-                                new_board._move_piece((i,j),capture_move)
-                                evaluate(next_side,new_node,depth)
-                for i in range(8):
-                    for j in range(8):
-                        move_moves = moves[i][j]
-                        if move_moves != None and curr_node.board.sides[i][j] == side:
-                            for move_move in move_moves:
-                                new_board = curr_node.board.clone()
-                                new_node = Node(new_board,curr_node)
-                                curr_node.childs.append(new_node)
-                                new_board._move_piece((i,j),move_move)
-                                evaluate(next_side,new_node,depth)
-                if (side == 'u'):
-                    max_score = -self.WIN_WEIGHT
-                    for child_node in curr_node.childs:
-                        if (child_node.value > max_score):
-                            max_score = child_node.value
-                    curr_node.value = max_score
-                elif (side == 'd'):
-                    min_score = self.WIN_WEIGHT
-                    for child_node in curr_node.childs:
-                        if (child_node.value < min_score):
-                            min_score = child_node.value
-                    curr_node.value = min_score
+                    # print('ROOT')
+                    pass
+            for i in range(8):
+                for j in range(8):
+                    capture_moves = captures[i][j]
+                    if capture_moves != None and curr_node.board.sides[i][j] == side:
+                        for capture_move in capture_moves:
+                            new_board = curr_node.board.clone()
+                            new_node = Node(new_board,curr_node)
+                            curr_node.childs.append(new_node)
+                            new_board._move_piece((i,j),capture_move)
+            for i in range(8):
+                for j in range(8):
+                    move_moves = moves[i][j]
+                    if move_moves != None and curr_node.board.sides[i][j] == side:
+                        for move_move in move_moves:
+                            new_board = curr_node.board.clone()
+                            new_node = Node(new_board,curr_node)
+                            curr_node.childs.append(new_node)
+                            new_board._move_piece((i,j),move_move)
+            if (side!=other_side):
+                return minimizer(curr_node,switch_side(side),depth)
+            else:
+                return maximizer(curr_node,switch_side(side),depth)
         root = Node(board.clone(),None)
         depth = 0
-        evaluate(input_side,root,depth)
-        min_score = self.WIN_WEIGHT
+        evaluate(root,input_side,depth)
+        max_score = -self.WIN_WEIGHT
         min_board = None
         min_node = None
         for child in root.childs:
-            if (child.value < min_score):
-                min_score = child.value
+            if (child.value > max_score):
+                max_score = child.value
                 min_board = child.board
                 min_node = child
-        # for i in range(len(self.container)):
-        #     for j in range(len(self.container[i])):
-        #         if (min_state[i][j] != self.container[i][j]):
-        #             self.tick_in([i,j])
-        # curr_node = min_node
-        # print(f'Min Point : {min_score}')
-        # print(min_board.to_string())
-        print(min_score)
+        print(max_score)
         print(f'Count : {self.step}')
         return min_board
     def get_point(self,board : Board,side : str):
@@ -103,12 +126,12 @@ class MinimaxEngine(Engine):
         return (ally_point,moves,captures,defenses)
     def _get_point(self,p_sides,p_types,p_moves,p_caps,p_defs,side):
         mapping = {
-            'p' : 1,
-            'k' : 3,
-            'b' : 3,
-            'r' : 5,
-            'q' : 10,
-            'K' : 1000,
+            'p' : 10,
+            'k' : 30,
+            'b' : 30,
+            'r' : 50,
+            'q' : 90,
+            'K' : 900,
         }
         move_multi = {
             'p' : 0.25,
@@ -152,17 +175,21 @@ class MinimaxEngine(Engine):
                 #     target_type = p_types[pos[0]][pos[1]]
                 #     local_point += mapping[p_type]*defense_multi[target_type]
                 local_capture_point = 0
-                for pos in p_caps[i][j]:
-                    target_type = p_types[pos[0]][pos[1]]
-                    local_point += mapping[target_type]/4
-                    local_capture_point += mapping[target_type]/2
+                
+                # for pos in p_caps[i][j]:
+                #     target_type = p_types[pos[0]][pos[1]]
+                #     # local_point += mapping[target_type]/4
+                #     local_capture_point += mapping[target_type]/2
+                
+                if (self.guide_map != None):
+                    local_point += self.guide_map[side][p_type][j][i]
                 if (p_sides[i][j] == side):
                     ally_point += local_point
                     ally_capture_point += local_capture_point
                 else:
                     enemy_point += local_point
                     enemy_capture_point += local_capture_point
-        return (ally_capture_point-enemy_capture_point/2,enemy_point)
+        return (ally_point-enemy_point,enemy_point)
                 
                 
         
