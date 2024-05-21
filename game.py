@@ -1,22 +1,40 @@
 from board import Board
 from ai_engine import Engine
-import json
+import json,time
 
 class Game:
     def __init__(self,board : Board,engine : Engine) -> None:
         self.board = board
         self.engine = engine
-        self.history = [board.clone()]
-        self.history[0].new_game()
+        self.history = [
+            {
+                'board' : board.clone(),
+                'time' : 0
+            }
+        ]
+        self.history[0]['board'].new_game()
+        self.last_time = time.time()
     def _write_log(self):
         log_data = []
         for ele in self.history:
-            log_data.append(ele.to_log())
+            dict_data : dict = ele['board'].to_log()
+            dict_data.update(
+                {
+                    'time' : ele['time']
+                }
+            )
+            log_data.append(dict_data)
         with open('logs.json','w') as file:
             file.write(json.dumps(log_data))
     def _log(self):
-        self.history.append(self.board.clone())
+        self.history.append(
+            {
+                'board' : self.board.clone(),
+                'time' : time.time()-self.last_time
+            }
+        )
         self._write_log()
+        self.last_time = time.time()
     def _bot_turn(self):
         self.board = self.engine.caculate(self.board,'u')
         self._log()
@@ -26,11 +44,11 @@ class Game:
         return result
     def turn_back_one_turn(self):
         if (len(self.history) > 2):
-            self.board = self.history[len(self.history)-3].clone()
+            self.board = self.history[len(self.history)-3]['board'].clone()
             self.history.pop()
             self.history.pop()
         else:
-            self.board = self.history[0].clone()
+            self.board = self.history[0]['board'].clone()
     def cli_play(self):
         while(True):
             self._bot_turn()

@@ -1,16 +1,13 @@
 from aiohttp import web
 import os
-import asyncio
 import json
-from enum import Enum
-import time
 from game import Game
 from board import Board
 from ai_engine import MinimaxEngine
 
 routes = web.RouteTableDef()
 no_cache = {'Cache-Control':'no-cache'}
-game = Game(Board(),MinimaxEngine())
+game = Game(Board(),MinimaxEngine(depth=4,ab_prune=True))
 game.board.new_game()
 
 @routes.get('/')
